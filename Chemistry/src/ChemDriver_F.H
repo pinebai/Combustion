@@ -329,8 +329,7 @@ extern "C" {
                         const Real* RhoY, ARLIM_P(RhoYlo),    ARLIM_P(RhoYhi),
                         const Real* RhoH, ARLIM_P(RhoHlo),    ARLIM_P(RhoHhi),
                         const Real* T,    ARLIM_P(Tlo),       ARLIM_P(Thi),
-                        Real*    RhoYdot, ARLIM_P(RhoYdotlo), ARLIM_P(RhoYdothi),
-                        Real* Patm);
+                        Real*    RhoYdot, ARLIM_P(RhoYdotlo), ARLIM_P(RhoYdothi) );
 #endif
 
     void FORT_RRATEC(const int* lo, const int* hi,
@@ -385,7 +384,7 @@ extern "C" {
 			   const Real* Told, ARLIM_P(Tolo), ARLIM_P(Tohi),
 			   const Real* const_src, ARLIM_P(cslo), ARLIM_P(cshi),
 			   Real* FuncCount, ARLIM_P(FuncCountlo), ARLIM_P(FuncCounthi),
-			   const Real* p, const Real* dt, Real* diag, 
+			   const Real* dt, Real* diag, 
                            const int* do_diag, const int* do_stiff);
 #endif
 

@@ -88,7 +88,6 @@ public:
                             int               sComprhoH,
                             int               sCompT,
                             Real              dt,
-                            Real              Patm,
                             FArrayBox*        chemDiag,
                             bool              use_stiff_solver = true) const;
 #endif
@@ -263,7 +262,6 @@ public:
                           const FArrayBox& RhoY,
                           const FArrayBox& RhoH,
                           const FArrayBox& T,
-                          Real             Patm,
                           const Box&       box,
                           int              sCompRhoY,
                           int              sCompRhoH,

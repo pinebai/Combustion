@@ -263,7 +263,7 @@ c     NOTE: scal converts result from assumed cgs to MKS (1 erg/s.cm^3 = .1 J/s.
 
 #ifdef LMC_SDC
       subroutine FORT_RRATERHOY(lo,hi,RhoY,DIMS(RhoY),RhoH,DIMS(RhoH),T,DIMS(T),
-     &                          RhoYdot,DIMS(RhoYdot),Patm)
+     &                          RhoYdot,DIMS(RhoYdot))
       implicit none
 
 #include "cdwrk.H"
@@ -279,7 +279,6 @@ c     NOTE: scal converts result from assumed cgs to MKS (1 erg/s.cm^3 = .1 J/s.
       REAL_T RhoH(DIMV(RhoH))
       REAL_T T(DIMV(T))
       REAL_T RhoYdot(DIMV(RhoYdot),Nspec)
-      REAL_T Patm
 
       REAL_T Zt(maxspec+1),Zdott(maxspec+1)
       integer i,j,n
@@ -287,7 +286,6 @@ c     NOTE: scal converts result from assumed cgs to MKS (1 erg/s.cm^3 = .1 J/s.
 
       TIME = 0.
       CALL CKRP(IWRK(ckbi), RWRK(ckbr), RU, RUC, P1atm)
-      RWRK(NP) = Patm * P1atm
 
       do j=lo(2),hi(2)
          do i=lo(1),hi(1)
@@ -849,7 +847,6 @@ c
      &     Told,      DIMS(Told),
      &     const_src, DIMS(const_src),
      &     FuncCount, DIMS(FuncCount),
-     &     Patm,
      &     dt,
      &     diag, do_diag, do_stiff)
       implicit none
@@ -876,7 +873,7 @@ c
       REAL_T Tnew(DIMV(rhoHnew))
       REAL_T const_src(DIMV(const_src),1:Nspec+1)
       REAL_T FuncCount(DIMV(FuncCount))
-      REAL_T Patm, dt
+      REAL_T dt
       REAL_T diag(DIMV(FuncCount),*)
 
       integer open_vode_failure_file
@@ -935,7 +932,6 @@ c
       !
       FIRST = .TRUE.
 
-      RWRK(NP) = Patm * P1atm
       !
       ! The following are in /sdc_function/ :
       !

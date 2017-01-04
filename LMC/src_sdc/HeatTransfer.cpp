@@ -695,7 +695,10 @@ HeatTransfer::HeatTransfer ()
     if (!have_dsdt)
         BoxLib::Abort("have_dsdt MUST be true");
 
+    // p_amb_old and p_amb_new contain the old-time and new-time
+    // pressure at level 0.  For closed chamber problems they change over time.
     // set p_amb_old and new if they haven't been set yet
+    // to the value in htdata.H set in PROB_F.F
     // only the coarse level advance and the level 0-1 mac_sync 
     // can modify these later
     if (p_amb_old == -1.0)
@@ -740,7 +743,10 @@ HeatTransfer::HeatTransfer (Amr&            papa,
     if (!have_dsdt)
         BoxLib::Abort("have_dsdt MUST be true");
 
+    // p_amb_old and p_amb_new contain the old-time and new-time
+    // pressure at level 0.  For closed chamber problems they change over time.
     // set p_amb_old and new if they haven't been set yet
+    // to the value in htdata.H set in PROB_F.F
     // only the coarse level advance and the level 0-1 mac_sync 
     // can modify these later
     if (p_amb_old == -1.0)
@@ -1648,18 +1654,6 @@ HeatTransfer::compute_instantaneous_reaction_rates (MultiFab&       R,
 
     const TimeLevel whichTime = which_time(State_Type, time);
 
-    Real Patm;
-
-    if (closed_chamber == 1 && whichTime == AmrNewTime)
-    {
-      // use new-time ambient pressure
-      Patm = p_amb_new / P1atm_MKS;
-    }
-    else
-    {
-      Patm = p_amb_old / P1atm_MKS;
-    }
-
     BL_ASSERT((nGrow==0)  ||  (how == HT_ZERO_GROW_CELLS) || (how == HT_EXTRAP_GROW_CELLS));
 
     if ((nGrow>0) && (how == HT_ZERO_GROW_CELLS))
@@ -1682,7 +1676,7 @@ HeatTransfer::compute_instantaneous_reaction_rates (MultiFab&       R,
         const Box& box = mfi.validbox();
         FArrayBox& rhoYdot = R[mfi];
 
-        chem_solve.reactionRateRhoY(rhoYdot,rhoY,rhoH,T,Patm,box,sCompRhoY,sCompRhoH,sCompT,sCompRhoYdot);
+        chem_solve.reactionRateRhoY(rhoYdot,rhoY,rhoH,T,box,sCompRhoY,sCompRhoH,sCompT,sCompRhoYdot);
     }
     
     if ((nGrow>0) && (how == HT_EXTRAP_GROW_CELLS))
@@ -4691,6 +4685,7 @@ HeatTransfer::advance (Real time,
 
     BL_PROFILE_VAR_START(HTMAC);
 
+    // during initialization, reset time 0 ambient pressure
     if (closed_chamber == 1 && level == 0 && !initial_step)
     {
       p_amb_old = p_amb_new;
@@ -4847,27 +4842,6 @@ HeatTransfer::advance_chemistry (MultiFab&       mf_old,
             cf_grids = getLevel(level+1).boxArray(); cf_grids.coarsen(fine_ratio);
         }
 
-        Real p_amb;
-	if (closed_chamber == 1)
-	{
-	  // we need level 0 prev and cur_time for closed chamber algorithm
-	  AmrLevel& amr_lev = parent->getLevel(0);
-	  StateData& state_data = amr_lev.get_state_data(0);
-	  const Real lev_0_prevtime = state_data.prevTime();
-	  const Real lev_0_curtime = state_data.curTime();
-	  const Real halftime = 0.5*(state[State_Type].prevTime()+state[State_Type].curTime());
-
-	  // time-center ambient pressure for reactions
-	  p_amb = (lev_0_curtime-halftime )/(lev_0_curtime-lev_0_prevtime) * p_amb_old +
-                  (halftime-lev_0_prevtime)/(lev_0_curtime-lev_0_prevtime) * p_amb_new;
-	}
-	else
-	{
-	  // for open chambers, ambient pressure is constant in time
-	  p_amb = p_amb_old;
-	}
-
-        const Real Patm      = p_amb / P1atm_MKS;
         MultiFab&  React_new = get_new_data(RhoYdot_Type);
         const int  ngrow     = React_new.nGrow();
         //
@@ -4940,7 +4914,7 @@ HeatTransfer::advance_chemistry (MultiFab&       mf_old,
                 const int s_spec = 0, s_rhoh = nspecies, s_temp = nspecies+2;
 
                 bool ok = getChemSolve().solveTransient_sdc(rYn,rHn,Tn,rYo,rHo,To,frc,fc,ba[i],
-							    s_spec,s_rhoh,s_temp,dt,Patm,chemDiag,
+							    s_spec,s_rhoh,s_temp,dt,chemDiag,
 							    use_stiff_solver);
             }
         }
@@ -6452,9 +6426,12 @@ HeatTransfer::calcDiffusivity (const Real time)
     MultiFab&  diff            = (whichTime == AmrOldTime) ? (*diffn_cc) : (*diffnp1_cc);
     FArrayBox tmp, bcen;
 
-    Real p_amb;
+    // for open chambers, ambient pressure is constant in time
+    Real p_amb = p_amb_old;
+
     if (closed_chamber == 1)
     {
+      // for closed chambers, use piecewise-linear interpolation
       // we need level 0 prev and cur_time for closed chamber algorithm
       AmrLevel& amr_lev = parent->getLevel(0);
       StateData& state_data = amr_lev.get_state_data(0);
@@ -6474,11 +6451,6 @@ HeatTransfer::calcDiffusivity (const Real time)
 	  p_amb = (lev_0_curtime-prevtime )/(lev_0_curtime-lev_0_prevtime) * p_amb_old +
                   (prevtime-lev_0_prevtime)/(lev_0_curtime-lev_0_prevtime) * p_amb_new;
       }
-    }
-    else
-    {
-      // for open chambers, ambient pressure is constant in time
-      p_amb = p_amb_old;
     }
 
     for (FillPatchIterator Rho_and_spec_fpi(*this,diff,nGrow,time,State_Type,Density,nspecies+1),
@@ -6831,9 +6803,12 @@ HeatTransfer::calc_dpdt (Real      time,
   Real dpdt_factor;
   FORT_GETDPDT(&dpdt_factor);
 
-  Real p_amb;
+  // for open chambers, ambient pressure is constant in time
+  Real p_amb = p_amb_old;
+
   if (closed_chamber == 1)
   {
+    // for closed chambers, use piecewise-linear interpolation
     // we need level 0 prev and cur_time for closed chamber algorithm
     AmrLevel& amr_lev = parent->getLevel(0);
     StateData& state_data = amr_lev.get_state_data(0);
@@ -6844,10 +6819,6 @@ HeatTransfer::calc_dpdt (Real      time,
     // use new-time ambient pressure
     p_amb = (lev_0_curtime-curtime )/(lev_0_curtime-lev_0_prevtime) * p_amb_old +
             (curtime-lev_0_prevtime)/(lev_0_curtime-lev_0_prevtime) * p_amb_new;
-  }
-  else
-  {
-    p_amb = p_amb_old;
   }
   
   if (dt <= 0.0 || dpdt_factor <= 0)

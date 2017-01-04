@@ -761,7 +761,6 @@ ChemDriver::reactionRateRhoY(FArrayBox&       RhoYdot,
                              const FArrayBox& RhoY,
                              const FArrayBox& RhoH,
                              const FArrayBox& T,
-                             Real             Patm,
                              const Box&       box,
                              int              sCompRhoY,
                              int              sCompRhoH,
@@ -786,8 +785,7 @@ ChemDriver::reactionRateRhoY(FArrayBox&       RhoYdot,
                    RhoY.dataPtr(sCompRhoY),       ARLIM(mabx.loVect()), ARLIM(mabx.hiVect()),
                    RhoH.dataPtr(sCompRhoH),       ARLIM(mbbx.loVect()), ARLIM(mbbx.hiVect()),
                    T.dataPtr(sCompT),             ARLIM(mcbx.loVect()), ARLIM(mcbx.hiVect()),
-                   RhoYdot.dataPtr(sCompRhoYdot), ARLIM(mobx.loVect()), ARLIM(mobx.hiVect()),
-                   &Patm);
+                   RhoYdot.dataPtr(sCompRhoYdot), ARLIM(mobx.loVect()), ARLIM(mobx.hiVect()) );
 }
 #endif
 
@@ -991,7 +989,6 @@ ChemDriver::solveTransient_sdc(FArrayBox&        rhoYnew,
 			       int               sComprhoH,
 			       int               sCompT,
 			       Real              dt,
-			       Real              Patm,
 			       FArrayBox*        chemDiag,
                                bool              use_stiff_solver) const
 {
@@ -1019,7 +1016,7 @@ ChemDriver::solveTransient_sdc(FArrayBox&        rhoYnew,
 				    Told.dataPtr(sCompT),       ARLIM(Told.loVect()),      ARLIM(Told.hiVect()),
 				    const_src.dataPtr(0),       ARLIM(const_src.loVect()), ARLIM(const_src.hiVect()),
 				    FuncCount.dataPtr(),        ARLIM(FuncCount.loVect()), ARLIM(FuncCount.hiVect()),
-				    &Patm, &dt, diagData, &do_diag, &do_stiff);
+				    &dt, diagData, &do_diag, &do_stiff);
     return success > 0;
 }
 #endif

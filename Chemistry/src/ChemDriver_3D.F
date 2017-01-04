@@ -266,7 +266,7 @@ c     NOTE: scal converts result from assumed cgs to MKS (1 erg/s.cm^3 = .1 J/s.
 #ifdef LMC_SDC
 c     used by LMC
       subroutine FORT_RRATERHOY(lo,hi,RhoY,DIMS(RhoY),RhoH,DIMS(RhoH),T,DIMS(T),
-     &                          RhoYdot,DIMS(RhoYdot),Patm)
+     &                          RhoYdot,DIMS(RhoYdot))
       implicit none
 
 #include "cdwrk.H"
@@ -282,7 +282,6 @@ c     used by LMC
       REAL_T RhoH(DIMV(RhoH))
       REAL_T T(DIMV(T))
       REAL_T RhoYdot(DIMV(RhoYdot),Nspec)
-      REAL_T Patm
 
       REAL_T Zt(maxspec+1),Zdott(maxspec+1)
       integer i,j,k,n
@@ -290,7 +289,6 @@ c     used by LMC
 
       TIME = zero
       CALL CKRP(IWRK(ckbi), RWRK(ckbr), RU, RUC, P1atm)
-      RWRK(NP) = Patm * P1atm
       !
       ! Note that c_0,c_1,rhoh_INIT & T_cell are thread-private.
       !
@@ -896,7 +894,6 @@ c     used by LMC
      &     Told,      DIMS(Told),
      &     const_src, DIMS(const_src),
      &     FuncCount, DIMS(FuncCount),
-     &     Patm,
      &     dt,
      &     diag, do_diag, do_stiff)
       implicit none
@@ -923,7 +920,7 @@ c     used by LMC
       REAL_T Tnew(DIMV(rhoHnew))
       REAL_T const_src(DIMV(const_src),1:Nspec+1)
       REAL_T FuncCount(DIMV(FuncCount))
-      REAL_T Patm, dt
+      REAL_T dt
       REAL_T diag(DIMV(FuncCount),*)
 
       integer open_vode_failure_file
@@ -985,7 +982,6 @@ c     used by LMC
       !
       FIRST = .TRUE.
 
-      RWRK(NP) = Patm * P1atm
       !
       ! The following are in /sdc_function/ :
       !
