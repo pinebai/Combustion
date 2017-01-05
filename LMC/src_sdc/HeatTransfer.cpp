@@ -5264,8 +5264,12 @@ HeatTransfer::mac_sync ()
       // Compute the corrective pressure, mac_sync_phi, used to 
       // compute U^{ADV,corr} in mac_sync_compute
       //
-      bool subtract_avg = (level == 0) ? true : false;
-      Real offset;
+      bool subtract_avg = false;
+      if (closed_chamber && level == 0)
+      {
+	subtract_avg = true;
+      }
+      Real offset = 0.0;
 
       BL_PROFILE_VAR("HT::mac_sync::ucorr", HTUCORR);
       mac_projector->mac_sync_solve(level,dt,rho_half,fine_ratio,
