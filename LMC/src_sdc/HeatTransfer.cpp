@@ -5183,7 +5183,7 @@ HeatTransfer::mac_sync ()
     const Real cur_time       = state[State_Type].curTime();
     const Real prev_pres_time = state[Press_Type].prevTime();
     const Real dt             = parent->dtLevel(level);
-    MultiFab&  Rh             = get_rho_half_time();
+    MultiFab&  rho_half       = get_rho_half_time();
     //
     // DeltaSsync Will hold q^{n+1,p} * (delta rho)^sync for conserved quantities
     // as defined before Eq (18) in DayBell:2000.  Note that in the paper, 
@@ -5264,8 +5264,12 @@ HeatTransfer::mac_sync ()
       // Compute the corrective pressure, mac_sync_phi, used to 
       // compute U^{ADV,corr} in mac_sync_compute
       //
+      bool subtract_avg = (level == 0) ? true : false;
+      Real offset;
+
       BL_PROFILE_VAR("HT::mac_sync::ucorr", HTUCORR);
-      mac_projector->mac_sync_solve(level,dt,Rh,fine_ratio,&delta_chi_sync);
+      mac_projector->mac_sync_solve(level,dt,rho_half,fine_ratio,
+				    &delta_chi_sync,subtract_avg,offset);
       BL_PROFILE_VAR_STOP(HTUCORR);
 
       if (!do_reflux) return;
@@ -5299,7 +5303,7 @@ HeatTransfer::mac_sync ()
       BL_PROFILE_VAR("HT::mac_sync::Vsync", HTVSYNC);
       if (do_mom_diff == 0) 
 	{
-	  mac_projector->mac_sync_compute(level,u_mac,Vsync,Ssync,Rh,
+	  mac_projector->mac_sync_compute(level,u_mac,Vsync,Ssync,rho_half,
 					  (level > 0) ? &getAdvFluxReg(level) : 0,
 					  advectionType,prev_time,
 					  prev_pres_time,dt,NUM_STATE,
@@ -5316,7 +5320,7 @@ HeatTransfer::mac_sync ()
 	  if (sync_scheme[comp]==UseEdgeState)
           {
 	    mac_projector->mac_sync_compute(level,Vsync,comp,
-					    comp,EdgeState, comp,Rh,
+					    comp,EdgeState, comp,rho_half,
 					    (level > 0 ? &getAdvFluxReg(level):0),
 					    advectionType,modify_reflux_normal_vel,dt,
 					    last_mac_sync_iter);
@@ -5349,7 +5353,7 @@ HeatTransfer::mac_sync ()
 	  // is no diffusion for this term
 	  //
 	  mac_projector->mac_sync_compute(level,Ssync,comp,s_ind,
-                                          EdgeState,comp,Rh,
+                                          EdgeState,comp,rho_half,
 					  (level > 0 ? &getAdvFluxReg(level):0),
 					  advectionType,modify_reflux_normal_vel,dt,
 					  last_mac_sync_iter);
@@ -5436,7 +5440,7 @@ HeatTransfer::mac_sync ()
         {
 	  int rho_flag = (do_mom_diff == 0) ? 1 : 3;
 	  getViscosity(beta, cur_time);
-	  diffusion->diffuse_Vsync(Vsync,dt,be_cn_theta,Rh,rho_flag,beta,0,
+	  diffusion->diffuse_Vsync(Vsync,dt,be_cn_theta,rho_half,rho_flag,beta,0,
 				   last_mac_sync_iter);
         }
 	    
@@ -5618,7 +5622,7 @@ HeatTransfer::mac_sync ()
 	    ABecLaplacian* visc_op;
 
 	    visc_op = diffusion->getViscOp(sigma,a,b,cur_time,
-					   visc_bndry,Rh,
+					   visc_bndry,rho_half,
 					   rho_flag,&rhsscale,rhoh_visc,dataComp,
 					   alpha,dataComp);
 
@@ -5776,7 +5780,7 @@ HeatTransfer::mac_sync ()
 	    // on entry, Ssync = RHS for (delta h)^sync diffusive solve
 	    // on exit, Ssync = rho^{n+1} * (delta h)^sync
 	    // on exit, flux = coeff * grad phi
-	    diffusion->diffuse_Ssync(Ssync,sigma,dt,be_cn_theta,Rh,
+	    diffusion->diffuse_Ssync(Ssync,sigma,dt,be_cn_theta,rho_half,
 				     rho_flag,flux,0,beta,0,alpha,0);
 	    if (do_viscsyncflux && level > 0 && last_mac_sync_iter)
 	    {
@@ -6814,11 +6818,10 @@ HeatTransfer::calc_dpdt (Real      time,
     StateData& state_data = amr_lev.get_state_data(0);
     const Real lev_0_prevtime = state_data.prevTime();
     const Real lev_0_curtime = state_data.curTime();
-    const Real curtime = state[State_Type].curTime();
 
     // use new-time ambient pressure
-    p_amb = (lev_0_curtime-curtime )/(lev_0_curtime-lev_0_prevtime) * p_amb_old +
-            (curtime-lev_0_prevtime)/(lev_0_curtime-lev_0_prevtime) * p_amb_new;
+    p_amb = (lev_0_curtime-time )/(lev_0_curtime-lev_0_prevtime) * p_amb_old +
+            (time-lev_0_prevtime)/(lev_0_curtime-lev_0_prevtime) * p_amb_new;
   }
   
   if (dt <= 0.0 || dpdt_factor <= 0)
