@@ -4140,8 +4140,8 @@ HeatTransfer::advance (Real time,
     // and divu in advance_setup
     MultiFab Dnp1(grids,nspecies+2,nGrowAdvForcing);
     MultiFab DDnp1(grids,1,nGrowAdvForcing);
-    MultiFab delta_chi(grids,1,nGrowAdvForcing);
-    MultiFab delta_chi_increment(grids,1,nGrowAdvForcing);
+    MultiFab chi(grids,1,nGrowAdvForcing);
+    MultiFab chi_increment(grids,1,nGrowAdvForcing);
     MultiFab mac_divu(grids,1,nGrowAdvForcing);
 
     // used for closed chamber algorithm
@@ -4156,7 +4156,7 @@ HeatTransfer::advance (Real time,
     BL_PROFILE_VAR_STOP(HTDIFF);
 
     BL_PROFILE_VAR_START(HTMAC);
-    delta_chi.setVal(0,nGrowAdvForcing);
+    chi.setVal(0,nGrowAdvForcing);
     BL_PROFILE_VAR_STOP(HTMAC);
 
     is_predictor = false;
@@ -4217,22 +4217,22 @@ HeatTransfer::advance (Real time,
       BL_PROFILE_VAR_START(HTMAC);
       setThermoPress(cur_time);
 
-      // compute delta_chi_increment
-      delta_chi_increment.setVal(0.0,nGrowAdvForcing);
-      calc_dpdt(cur_time,dt,delta_chi_increment,u_mac);
+      // compute chi_increment
+      chi_increment.setVal(0.0,nGrowAdvForcing);
+      calc_dpdt(cur_time,dt,chi_increment,u_mac);
       BL_PROFILE_VAR_STOP(HTMAC);
 
-      showMF("sdc",delta_chi_increment,"sdc_delta_chi_increment",level,sdc_iter,parent->levelSteps(level));
+      showMF("sdc",chi_increment,"sdc_chi_increment",level,sdc_iter,parent->levelSteps(level));
 
-      // add delta_chi_increment to delta_chi
+      // add chi_increment to chi
       BL_PROFILE_VAR_START(HTMAC);
-      MultiFab::Add(delta_chi,delta_chi_increment,0,0,1,nGrowAdvForcing);
+      MultiFab::Add(chi,chi_increment,0,0,1,nGrowAdvForcing);
       BL_PROFILE_VAR_STOP(HTMAC);
-      showMF("sdc",delta_chi,"sdc_delta_chi",level,sdc_iter,parent->levelSteps(level));
+      showMF("sdc",chi,"sdc_chi",level,sdc_iter,parent->levelSteps(level));
 
-      // add delta_chi to time-centered mac_divu
+      // add chi to time-centered mac_divu
       BL_PROFILE_VAR_START(HTMAC);
-      MultiFab::Add(mac_divu,delta_chi,0,0,1,nGrowAdvForcing);
+      MultiFab::Add(mac_divu,chi,0,0,1,nGrowAdvForcing);
       BL_PROFILE_VAR_STOP(HTMAC);
 
       if (closed_chamber == 1 && level == 0)
@@ -4481,7 +4481,7 @@ HeatTransfer::advance (Real time,
     DDn.clear();
     Dnp1.clear();
     DDnp1.clear();
-    delta_chi_increment.clear();
+    chi_increment.clear();
 
     if (verbose && ParallelDescriptor::IOProcessor())
       std::cout << " SDC iterations complete \n";
@@ -4604,10 +4604,10 @@ HeatTransfer::advance (Real time,
 
     showMF("sdc",get_new_data(State_Type),"sdc_Snew_preProj",level,parent->levelSteps(level));
 
-    // compute delta_chi correction
+    // compute chi correction
     // place to take dpdt stuff out of nodal project
-    //    calc_dpdt(cur_time,dt,delta_chi_increment,u_mac);
-    //    MultiFab::Add(get_new_data(Divu_Type),delta_chi_increment,0,0,1,0);
+    //    calc_dpdt(cur_time,dt,chi_increment,u_mac);
+    //    MultiFab::Add(get_new_data(Divu_Type),chi_increment,0,0,1,0);
 
     // subtract mean from divu
     BL_PROFILE_VAR_START(HTPROJ);
@@ -5199,8 +5199,8 @@ HeatTransfer::mac_sync ()
     ////////////////////////
     const int numscal = NUM_STATE - BL_SPACEDIM;
 
-    MultiFab delta_chi_sync(grids,1,0);
-    delta_chi_sync.setVal(0);
+    MultiFab chi_sync(grids,1,0);
+    chi_sync.setVal(0);
 
     PArray<MultiFab> S_new_sav(finest_level+1,PArrayManage);
 
@@ -5240,7 +5240,7 @@ HeatTransfer::mac_sync ()
 	last_mac_sync_iter=false;
       }
 
-      MultiFab delta_chi_sync_increment(grids,1,0);
+      MultiFab chi_sync_increment(grids,1,0);
 
       for (int lev=level; lev<=finest_level; lev++)
       {
@@ -5273,7 +5273,7 @@ HeatTransfer::mac_sync ()
 
       BL_PROFILE_VAR("HT::mac_sync::ucorr", HTUCORR);
       mac_projector->mac_sync_solve(level,dt,rho_half,fine_ratio,
-				    &delta_chi_sync,subtract_avg,offset);
+				    &chi_sync,subtract_avg,offset);
       BL_PROFILE_VAR_STOP(HTUCORR);
 
       if (!do_reflux) return;
@@ -5967,10 +5967,10 @@ HeatTransfer::mac_sync ()
       BL_PROFILE_VAR_STOP(HTSSYNC);
       showMF("sdcSync",S_new,"sdc_Snew_postInterpAvgSync",level,parent->levelSteps(level));
 
-      delta_chi_sync_increment.setVal(0,0);
-      calc_dpdt(cur_time,dt,delta_chi_sync_increment,u_mac);
+      chi_sync_increment.setVal(0,0);
+      calc_dpdt(cur_time,dt,chi_sync_increment,u_mac);
 
-      MultiFab::Subtract(delta_chi_sync,delta_chi_sync_increment,0,0,1,0);
+      MultiFab::Subtract(chi_sync,chi_sync_increment,0,0,1,0);
 
     }  // end loop over mac_sync_iters
 
