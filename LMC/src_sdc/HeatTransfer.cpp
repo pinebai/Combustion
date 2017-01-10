@@ -4337,6 +4337,10 @@ HeatTransfer::advance (Real time,
 	const Box& gbox = BoxLib::grow(mfi.validbox(),nGrowAdvForcing);
 	f.copy(dn,gbox,0,gbox,0,nspecies+1); // add Dn to RhoY and RhoH
 	f.plus(ddn,gbox,gbox,0,nspecies,1); // add DDn to RhoH forcing
+	if (closed_chamber == 1)
+	{
+	  f.plus(dp0dt,nspecies,1); // add dp0/dt to enthalpy forcing
+	}
 	f.plus(r,gbox,gbox,0,0,nspecies); // add R to RhoY, no contribution for RhoH
       }
       BL_PROFILE_VAR_STOP(HTADV);
@@ -4402,6 +4406,10 @@ HeatTransfer::advance (Real time,
 	const FArrayBox& dwbar = DWbar[mfi];
 	f.plus(dwbar,box,box,0,0,nspecies); // add DWbar to RhoY
 #endif
+	if (closed_chamber == 1)
+	{
+	  f.plus(dp0dt,nspecies,1); // add dp0/dt to enthalpy forcing
+	}
 	f.plus(a,box,box,first_spec,0,nspecies+1); // add A into RhoY and RhoH
 	f.plus(r,box,box,0,0,nspecies); // no reactions for RhoH
       }
