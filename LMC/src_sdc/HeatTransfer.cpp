@@ -107,6 +107,7 @@ namespace
 
 Real HeatTransfer::p_amb_old;
 Real HeatTransfer::p_amb_new;
+Real HeatTransfer::dp0dt;
 int  HeatTransfer::closed_chamber;
 int  HeatTransfer::num_divu_iters;
 int  HeatTransfer::init_once_done;
@@ -4026,6 +4027,7 @@ HeatTransfer::advance (Real time,
       // set new-time ambient pressure to be a copy of old-time ambient pressure
       p_amb_new = p_amb_old;
     }
+
     BL_PROFILE_VAR_STOP(HTMAC);
 
     BL_PROFILE_REGION_START("R::HT::advance()[src_sdc]");
@@ -4288,6 +4290,7 @@ HeatTransfer::advance (Real time,
 	theta_nph.plus(-thetabar,0,1);
 
 	p_amb_new = p_amb_old + dt*(Sbar/thetabar);
+	dp0dt = Sbar/thetabar;
 
 	// update mac rhs by adding delta_theta * (Sbar / thetabar)
 	for (MFIter mfi(mac_divu); mfi.isValid(); ++mfi)
@@ -4433,12 +4436,16 @@ HeatTransfer::advance (Real time,
 	  const FArrayBox& dhat = Dhat[mfi];
 	  const FArrayBox& ddn = DDn[mfi];
 	  const FArrayBox& ddnp1 = DDnp1[mfi];
-	  f.copy(dn,box,0,box,0,nspecies+1); // copy Dn into RhoY and RhoH
+	  f.copy(dn,box,0,box,0,nspecies+1);    // copy Dn into RhoY and RhoH
 	  f.minus(dnp1,box,box,0,0,nspecies+1); // subtract Dnp1 from RhoY and RhoH
-	  f.plus(ddn  ,box,box,0,nspecies,1); // add DDn to RhoH, no contribution for RhoY
-	  f.plus(ddnp1,box,box,0,nspecies,1); // add DDnp1 to RhoH, no contribution for RhoY
+	  f.plus(ddn  ,box,box,0,nspecies,1);   // add DDn to RhoH, no contribution for RhoY
+	  f.plus(ddnp1,box,box,0,nspecies,1);   // add DDnp1 to RhoH, no contribution for RhoY
 	  f.mult(0.5);
-	  f.plus(dhat,box,box,0,0,nspecies+1); // add Dhat to RhoY and RHoH
+	  if (closed_chamber == 1)
+	  {
+	    f.plus(dp0dt,nspecies,1); // add dp0/dt to enthalpy forcing
+	  }
+	  f.plus(dhat,box,box,0,0,nspecies+1);       // add Dhat to RhoY and RHoH
 	  f.plus(a,box,box,first_spec,0,nspecies+1); // add A to RhoY and RhoH
         }
       BL_PROFILE_VAR_STOP(HTREAC);

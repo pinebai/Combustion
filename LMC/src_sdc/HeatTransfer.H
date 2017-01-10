@@ -421,6 +421,7 @@ private:
     // these refer to the old and new-time ambient pressure for level 0
     static Real p_amb_old;
     static Real p_amb_new;
+    static Real dp0dt;
 
     static int closed_chamber;
 
