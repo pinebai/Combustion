@@ -822,40 +822,34 @@ c              Vincy = Vswirl*( x1/r) + Vradial*x2/r
 c ::: -----------------------------------------------------------
       
       subroutine bcfunction(orient,x,y,z,time,u,v,w,rho,Yl,T,h,dx,getuvw)
-
       implicit none
-
       integer orient
       REAL_T x, y, z, time, u, v, w, rho, Yl(0:*), T, h, dx(SDIM)
       logical getuvw
-
 #include <htdata.H>
 #include <cdwrk.H>
 #include <bc.H>
 #include <probdata.H>
-
-      REAL_T Vbndry(3), eta, Patm, r, rn
-      integer n, getZone, zone, lo(SDIM), hi(SDIM)
-      data lo / 1, 1, 1 /
-      data hi / 1, 1, 1 /
+      integer n, getZone, zone
 
       if (.not. bcinit) then
          call bl_abort('Need to initialize boundary condition function')
       end if
-      
-      if (orient .le. ZHI) then
 
+      if (orient .lt. 6) then
          zone = getZone(x,y,z)
+         u = u_bc(zone)
+         v = v_bc(zone)
+         w = 0.d0
          rho = rho_bc(zone)
          do n = 0, Nspec-1
             Yl(n) = Y_bc(n,zone)
          end do
          T = T_bc(zone)
          h = h_bc(zone)
-         Patm = pamb / 101325.0d0
 
          if (getuvw) then
-         if (probtype.eq.3) then
+         if (probtype.eq.3 .or. probtype.eq.1) then
             u = zero
             v = zero
             w =  V_in + (time-tbase_control)*dV_control
@@ -865,6 +859,7 @@ c ::: -----------------------------------------------------------
          write(6,*) 'No boundary condition for orientation = ', orient
          call bl_abort(" ")
       endif
+
       end
 
       REAL_T function shapet(r)
