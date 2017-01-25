@@ -1235,6 +1235,7 @@ HeatTransfer::reset_typical_values (const MultiFab& S)
 Real
 HeatTransfer::estTimeStep ()
 {
+
     Real estdt = NavierStokesBase::estTimeStep();
 
     if (fixed_dt > 0.0 || !divu_ceiling)
@@ -4691,7 +4692,14 @@ HeatTransfer::advance (Real time,
     //
     // Update estimate for allowable time step.
     //
-    dt_test = std::min(dt_test, estTimeStep());
+    if (fixed_dt > 0)
+    {
+      dt_test = estTimeStep();
+    }
+    else
+    {
+      dt_test = std::min(dt_test, estTimeStep());
+    }
 
     if (verbose && ParallelDescriptor::IOProcessor())
         std::cout << "HeatTransfer::advance(): at end of time step\n";
