@@ -2286,10 +2286,13 @@ HeatTransfer::sum_integrated_quantities ()
 
         if (ParallelDescriptor::IOProcessor())
         {
-            std::cout << "min,max temp = " << vmin[nc-1] << ", " << vmax[nc-1] << '\n';
+            std::cout << "TIME= " << time 
+		      << " min,max temp = " << vmin[nc-1] << ", " << vmax[nc-1] << '\n';
             for (int n=0; n<BL_SPACEDIM; ++n) {
                 std::string str = (n==0 ? "xvel" : (n==1 ? "yvel" : "zvel") );
-                std::cout << "min,max "<< str << "  = " << vmin[Xvel+n] << ", " << vmax[Xvel+n] << '\n';
+                std::cout << "TIME= " << time 
+			  << " min,max "<< str << "  = " << vmin[Xvel+n] 
+			  << ", " << vmax[Xvel+n] << '\n';
             }
         }
 
@@ -2311,7 +2314,8 @@ HeatTransfer::sum_integrated_quantities ()
             }
             
             if (ParallelDescriptor::IOProcessor()) {
-                std::cout << "min,max rho-sum rho Y_l = "
+                std::cout << "TIME= " << time 
+			  << " min,max rho-sum rho Y_l = "
                           << min_sum << ", " << max_sum << '\n';
             }
             
@@ -2331,7 +2335,8 @@ HeatTransfer::sum_integrated_quantities ()
             }
             
             if (ParallelDescriptor::IOProcessor()) {
-                std::cout << "min,max sum RhoYdot = "
+                std::cout << "TIME= " << time 
+			  << " min,max sum RhoYdot = "
                           << min_sum << ", " << max_sum << '\n';
             }
         }       
