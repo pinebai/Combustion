@@ -2228,6 +2228,16 @@ HeatTransfer::sum_integrated_quantities ()
 
             FORT_ACTIVECONTROL(&hival,&time,&crse_dt,&MyProc,&step,&restart,&usetemp);
         }
+	else
+	{
+	  Real fuelmass = 0.0;
+	  std::string fuel = "rho.Y(" + fuelName + ")";
+	  for (int lev = 0; lev <= finest_level; lev++)
+	    fuelmass += getLevel(lev).volWgtSum(fuel,time);
+	  
+	  if (verbose && ParallelDescriptor::IOProcessor())
+	    std::cout << " FUELMASS= " << fuelmass;
+	}
     }
 
     if (verbose && ParallelDescriptor::IOProcessor())
