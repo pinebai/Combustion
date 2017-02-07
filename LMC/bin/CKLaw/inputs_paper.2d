@@ -1,6 +1,6 @@
 ht.plot_auxDiags = 1
 
-max_step  = 5000
+max_step  = 50000
 stop_time =  0.3
 
 geometry.coord_sys = 0  # 0 => cart, 1 => RZ
