@@ -13,7 +13,7 @@
   vorterr = 1.e3
   vorterr = 100
   flametracval = 1.e-8
-  V_in = .1527
+  V_in = 0
   phi_in = 0.4
   nchemdiag = 1
   pertmag = .001
