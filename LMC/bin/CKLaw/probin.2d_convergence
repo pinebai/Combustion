@@ -5,7 +5,7 @@
   bloby = 0.
   y_offset = .03011
   y_offset = -.03011
-  y_offset = 0.008
+  y_offset = 0.007
   probtype = 1
   flametracval = .00001
   max_vort_lev = 3
