@@ -418,7 +418,7 @@ private:
 std::string HeatTransfer::fuelName        = "CH4";
 Array<std::string> HeatTransfer::consumptionName(1);
 static std::string oxidizerName           = "O2";
-static std::string productName            = "CO2";
+std::string HeatTransfer::productName     = "CO2";
 
 void
 HeatTransfer::variableSetUp ()

@@ -9,6 +9,7 @@ geometry.prob_hi   =  .015  .015  .03
 
 ns.tranfile        = ../tran.asc.LiDryer
 ns.fuelName        = H2
+ns.productName     = H2O
 ns.oxidizerName    = O2
 ns.flameTracName   = H
 ns.consumptionName = H2
