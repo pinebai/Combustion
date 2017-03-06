@@ -1054,6 +1054,24 @@ HeatTransfer::restart (Amr&          papa,
 
     // Deal with typical values
     set_typical_values(true);
+
+
+    // get pamb
+    if (level == 0 && ParallelDescriptor::IOProcessor())
+    {
+      std::ifstream PambFile;
+      std::string FullPathPambFile = parent->theRestartFile();
+      FullPathPambFile += "/Pamb";
+      PambFile.open(FullPathPambFile.c_str(), std::ios::in);
+
+      PambFile >> p_amb_old;
+      p_amb_new = p_amb_old;
+      PambFile.close();
+
+    }
+    ParallelDescriptor::Bcast(&p_amb_old, 1, ParallelDescriptor::IOProcessorNumber());
+    ParallelDescriptor::Bcast(&p_amb_new, 1, ParallelDescriptor::IOProcessorNumber());
+
 }
 
 void
@@ -1887,24 +1905,35 @@ HeatTransfer::checkPoint (const std::string& dir,
 {
     NavierStokesBase::checkPoint(dir,os,how,dump_old);
 
-    if (level == 0)
+    // typical values
+    if (level == 0 && ParallelDescriptor::IOProcessor())
     {
-        if (ParallelDescriptor::IOProcessor())
-        {
-            const std::string tvfile = dir + "/" + typical_values_filename;
-            std::ofstream tvos;
-            tvos.open(tvfile.c_str(),std::ios::out|std::ios::trunc|std::ios::binary);
-            if (!tvos.good())
-                BoxLib::FileOpenFailed(tvfile);
-            Box tvbox(IntVect(),(NUM_STATE-1)*BoxLib::BASISV(0));
-            int nComp = typical_values.size();
-            FArrayBox tvfab(tvbox,nComp);
-            for (int i=0; i<nComp; ++i) {
-                tvfab.dataPtr()[i] = typical_values[i];
-            }
-            tvfab.writeOn(tvos);
-        }
+      const std::string tvfile = dir + "/" + typical_values_filename;
+      std::ofstream tvos;
+      tvos.open(tvfile.c_str(),std::ios::out|std::ios::trunc|std::ios::binary);
+      if (!tvos.good())
+	BoxLib::FileOpenFailed(tvfile);
+      Box tvbox(IntVect(),(NUM_STATE-1)*BoxLib::BASISV(0));
+      int nComp = typical_values.size();
+      FArrayBox tvfab(tvbox,nComp);
+      for (int i=0; i<nComp; ++i) {
+	tvfab.dataPtr()[i] = typical_values[i];
+      }
+      tvfab.writeOn(tvos);
     }
+
+    // ambient pressure
+    if (level == 0 && ParallelDescriptor::IOProcessor())
+    {
+      std::ofstream PambFile;
+      std::string FullPathPambFile = dir;
+      FullPathPambFile += "/Pamb";
+      PambFile.open(FullPathPambFile.c_str(), std::ios::out);
+
+      PambFile << std::setprecision(17) << p_amb_new;
+      PambFile.close();
+    }
+
 }
 
 void
@@ -4321,7 +4350,8 @@ HeatTransfer::advance (Real time,
 
 	if (ParallelDescriptor::IOProcessor())
 	{
-	  std::cout << "level 0: p_amb_old, p_amb_new = " 
+	  std::cout << "level 0: prev_time, cur_time, p_amb_old, p_amb_new = " 
+		    << prev_time << " " << cur_time << " " 
 		    << p_amb_old << " " << p_amb_new << std::endl;
 	}
 
