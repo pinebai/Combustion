@@ -528,6 +528,7 @@ private:
     static Real        P1atm_MKS;
     static std::string turbFile;
     static std::string fuelName;
+    static std::string productName;
     static Array<std::string> consumptionName;
     static int         calcDiffusivity_count;
     static Real        new_T_threshold;
