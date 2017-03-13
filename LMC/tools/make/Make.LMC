@@ -82,6 +82,11 @@ ifeq ($(USE_NEWMECH), TRUE)
   DEFINES += -DBL_NOLINEVALUES -DBL_USE_NEWMECH -DBL_PARALLEL_IO
 endif
 
+ifeq ($(CHEMISTRY_MODEL), GRI30ION)
+  cEXE_sources += gri30ion.c
+  vpath %.f   $(VPATH_LOCATIONS) $(COMBUSTION_DIR)/Chemistry/data/gri30ion/PMFs
+  vpath %.c $(VPATH_LOCATIONS) $(COMBUSTION_DIR)/Chemistry/data/gri30ion
+endif
 ifeq ($(CHEMISTRY_MODEL), ALZETA)
   cEXE_sources += alzeta.c
   vpath %.f   $(VPATH_LOCATIONS) $(COMBUSTION_DIR)/Chemistry/data/Alzeta/PMFs
