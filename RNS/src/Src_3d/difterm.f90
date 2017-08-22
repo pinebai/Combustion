@@ -518,9 +518,9 @@ contains
        j = lo(2)
        do i=lo(1),hi(1)
           ! viscous stress
-          dudy = 0.d50*dxinv(2)*Qc(i,lo(2),QU)
-          dvdy = 0.d50*dxinv(2)*Qc(i,lo(2),QV)
-          dwdy = 0.d50*dxinv(2)*Qc(i,lo(2),QW)
+          dudy = 0.5d0*dxinv(2)*Qc(i,lo(2),QU)
+          dvdy = 0.5d0*dxinv(2)*Qc(i,lo(2),QV)
+          dwdy = 0.5d0*dxinv(2)*Qc(i,lo(2),QW)
           dudx = 0.d0
           dvdx = 0.d0
           dvdz = 0.d0
